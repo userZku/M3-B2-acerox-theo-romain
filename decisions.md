@@ -40,7 +40,19 @@
 
 **Argument** : ça permet de les regrouper en une seule ligne (utile pour le CSV capteurs IoT qui a 2 % de doublons natifs :))
 
-## 5. Stratégie RGPD (si vous prenez ERP)
+## 5. Migration Alembic
+
+> Documenter le rollback (alembic downgrade -1) et expliquer quand un rollback est nécessaire (migration boguée, déploiement à annuler), pas seulement la commande.
+
+**Choix** : rollback contrôlé à une migration (downgrade -1) en cas d'incident : `alembic downgrade -1`
+
+**Argument** :
+- `alembic downgrade -1` fait revenir la BDD d'une révision Alembic en arrière (annule la dernière migration appliquée, via la fonction `downgrade()` du script de migration).
+- On l'utilise si la migration présente une erreur (erreur SQL, contrainte incohérente, type incorrect) ou si un déploiement doit être annulé.
+- Avant rollback: sauvegarde de la BDD + vérification de l'impact (perte potentielle de données si la migration supprimait des colonnes/tables).
+- Après rollback: correction du script, nouveau test, puis `alembic upgrade head` pour redéployer proprement.
+
+## 6. Stratégie RGPD (si vous prenez ERP)
 
 > Si vous prenez ERP : que faites-vous de `ouvrier_id` ?
 
@@ -50,7 +62,7 @@
 
 **Argument** : inutile dans notre cas
 
-## 6. Stratégie de tests
+## 7. Stratégie de tests
 
 > Quels 3 tests minimum allez-vous écrire ?
 
@@ -58,13 +70,13 @@
 2. Ingestion d'un fichier valide → N lignes insérées sans doublon : vérification qu'aucune insertion en BDD ne se produit à la 2ème insertion
 3. Ingestion fichier malformé → exception claire, BDD inchangée : vérification de la bonne réception d'un exception claire et que la BDD est inchangée
 
-## 7. Convention binôme
+## 8. Convention binôme
 
 - Driver / Navigator switch toutes les **30 min** : ☑ oui ☐ adapté à...
 - Tous les commits significatifs ont `Co-authored-by:` : ☑ oui ☐ ...
 - Branche perso ou main partagée : main partagé
 
-## 8. Conformité au contrat de données
+## 9. Conformité au contrat de données
 
 > Confrontez votre livraison à `ressources/contrat_donnees_modele.md`. Pour
 > chaque clause de qualité **honorée** : laquelle, comment, et **où** dans le
