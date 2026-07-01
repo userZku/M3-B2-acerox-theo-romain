@@ -1,0 +1,3 @@
+timestamp,site,line_id,sensor_id,temperature_c,vibration_mms,debit_uh
+2026-04-14T19:21:43,Lyon,1,SLYO-L1-T01,77.92,5.539793028949028,null
+2026-04-14T19:21:43,null,1,SLYO-L1-T01,77.92,5.539793028949028,101.27

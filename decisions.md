@@ -75,8 +75,8 @@ Nous avons donc inséré null pour la donnée vibration car le modèle l'autoris
 > Quels 3 tests minimum allez-vous écrire ?
 
 1. Migration appliquée → la table existe : vérification que la table attendue existe après création du schéma
-2. Ingestion d'un fichier valide → N lignes insérées sans doublon : vérification qu'aucune insertion en BDD ne se produit à la 2ème insertion
-3. Ingestion fichier malformé → exception claire, BDD inchangée : vérification de la bonne réception d'un exception claire et que la BDD est inchangée
+2. Ingestion d'un fichier valide → 8 lignes insérées dont 1 doublon : vérification que 7 lignes sont insérées et qu'aucune insertion en BDD ne se produit à la 2ème insertion.
+3. Ingestion fichier malformé → exception claire, BDD inchangée : test d'insertion d'un fichier inexistant (FileNotFoundError) et test d'une insertion d'une ligne invalide (IntegrityError).
 
 ## 9. Convention binôme
 
