@@ -8,7 +8,7 @@ TODO binôme : ajouter ICI le modèle de votre nouvelle table
 """
 from __future__ import annotations
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, DateTime, Float, Integer, String, UniqueConstraint
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -51,3 +51,21 @@ class Produit(Base):
 #  - clés étrangères
 #  - contraintes d'unicité
 #
+
+class MesuresIoT(Base):
+    """Table des mesures IoT (exemple de table à ajouter)."""
+
+    __tablename__ = "mesures_iot"
+    __table_args__ = (UniqueConstraint("timestamp", "sensor_id", name="uq_mesures_iot_timestamp_sensor"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, nullable=False, index=True)
+    site = Column(String(50), nullable=False, index=True)
+    line_id = Column(Integer, nullable=False, index=True)
+    sensor_id = Column(String(50), nullable=False, index=True)
+    temperature_c = Column(Float, nullable=False)
+    vibration_mms = Column(Float, nullable=True)
+    debit_uh = Column(Float, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"MesuresIoT(timestamp={self.timestamp!r}, temperature_c={self.temperature_c}, debit_uh={self.debit_uh})"
