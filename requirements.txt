@@ -1,0 +1,14 @@
+# M3-B2 — requirements
+# Python 3.11+
+
+# Data + BDD
+pandas==2.2.2
+numpy==1.26.4
+sqlalchemy==2.0.36
+alembic==1.13.3
+
+# Tests
+pytest==8.3.3
+
+# Note : la mission étoile RAG est en M3-B1 (pas ici). Ses deps sont déclarées
+# dans le requirements.txt du repo ia-atos-parcours-m3-b1.
