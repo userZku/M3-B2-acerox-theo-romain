@@ -13,7 +13,19 @@
 - Lors de M3-B1 on pensait tous les deux ne pas utiliser ERP comme source d'entrainement mais plus comme source d'enrichissement
 - IOT contient les données industrielles sur l'état des capteurs : ça devrait être suffisant pour déterminer dans un premier temps le defaut qualité
 
-## 2. Stratégie de gestion des doublons
+## 2. Réflexe de stockage
+
+> Pourquoi une BDD relationnelle SQLite ici, et dans quel cas du document MongoDB ou du fichier Parquet ?
+> S'appuyer sur la grille de décision Stockage & échelle
+
+**Choix** : BDD relationnelle SQLite :)
+
+**Argument** : 
+- Données structurée (lignes/colonnes, schéma stable) donc BDD relationnelle suffit. 
+- Les logs IOT demandent des écritures fréquentes.
+- Volume des logs < 1 Go (3Mo sur un mois), même sur du temps réel les données tiennent ne RAM.
+
+## 3. Stratégie de gestion des doublons
 
 > Comment gérez-vous les doublons à l'ingestion ? `INSERT OR IGNORE` SQL,
 > upsert applicatif, dédup pandas avant insertion ?
@@ -22,7 +34,7 @@
 
 **Argument** : ça permet de les regrouper en une seule ligne (utile pour le CSV capteurs IoT qui a 2 % de doublons natifs :))
 
-## 3. Stratégie RGPD (si vous prenez ERP)
+## 4. Stratégie RGPD (si vous prenez ERP)
 
 > Si vous prenez ERP : que faites-vous de `ouvrier_id` ?
 
@@ -32,7 +44,7 @@
 
 **Argument** : inutile dans notre cas
 
-## 4. Stratégie de tests
+## 5. Stratégie de tests
 
 > Quels 3 tests minimum allez-vous écrire ?
 
@@ -40,13 +52,13 @@
 2. Ingestion d'un fichier valide → N lignes insérées sans doublon : vérification qu'aucune insertion en BDD ne se produit à la 2ème insertion
 3. Ingestion fichier malformé → exception claire, BDD inchangée : vérification de la bonne réception d'un exception claire et que la BDD est inchangée
 
-## 5. Convention binôme
+## 6. Convention binôme
 
 - Driver / Navigator switch toutes les **30 min** : ☑ oui ☐ adapté à...
 - Tous les commits significatifs ont `Co-authored-by:` : ☑ oui ☐ ...
 - Branche perso ou main partagée : main partagé
 
-## 6. Conformité au contrat de données
+## 7. Conformité au contrat de données
 
 > Confrontez votre livraison à `ressources/contrat_donnees_modele.md`. Pour
 > chaque clause de qualité **honorée** : laquelle, comment, et **où** dans le
