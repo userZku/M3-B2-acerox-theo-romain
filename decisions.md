@@ -25,7 +25,13 @@
 - Les logs IOT demandent des écritures fréquentes.
 - Volume des logs < 1 Go (3Mo sur un mois), même sur du temps réel les données tiennent ne RAM.
 
-## 3. Stratégie de gestion des doublons
+## 3. Exigences du contrat
+
+- Clé d'unicité : qu'est-ce qui identifie une ligne ? => UniqueConstraint(`timestamp` + `sensor_id`)
+- Index : quelle(s) colonne(s) sont filtrées souvent ? => timestamp, site, line_id, sensor_id : ces colonnes seront souvent utilisées dans les WHERE des requêtes.
+- Nullable : quels champs peuvent légitimement manquer ? => vibration peut manquer (capteur momentanément muet)
+
+## 4. Stratégie de gestion des doublons
 
 > Comment gérez-vous les doublons à l'ingestion ? `INSERT OR IGNORE` SQL,
 > upsert applicatif, dédup pandas avant insertion ?
@@ -34,7 +40,7 @@
 
 **Argument** : ça permet de les regrouper en une seule ligne (utile pour le CSV capteurs IoT qui a 2 % de doublons natifs :))
 
-## 4. Stratégie RGPD (si vous prenez ERP)
+## 5. Stratégie RGPD (si vous prenez ERP)
 
 > Si vous prenez ERP : que faites-vous de `ouvrier_id` ?
 
@@ -44,7 +50,7 @@
 
 **Argument** : inutile dans notre cas
 
-## 5. Stratégie de tests
+## 6. Stratégie de tests
 
 > Quels 3 tests minimum allez-vous écrire ?
 
@@ -52,13 +58,13 @@
 2. Ingestion d'un fichier valide → N lignes insérées sans doublon : vérification qu'aucune insertion en BDD ne se produit à la 2ème insertion
 3. Ingestion fichier malformé → exception claire, BDD inchangée : vérification de la bonne réception d'un exception claire et que la BDD est inchangée
 
-## 6. Convention binôme
+## 7. Convention binôme
 
 - Driver / Navigator switch toutes les **30 min** : ☑ oui ☐ adapté à...
 - Tous les commits significatifs ont `Co-authored-by:` : ☑ oui ☐ ...
 - Branche perso ou main partagée : main partagé
 
-## 7. Conformité au contrat de données
+## 8. Conformité au contrat de données
 
 > Confrontez votre livraison à `ressources/contrat_donnees_modele.md`. Pour
 > chaque clause de qualité **honorée** : laquelle, comment, et **où** dans le
@@ -66,11 +72,11 @@
 
 | Clause du contrat | Honorée ? | Comment / où dans le code |
 |---|---|---|
-| Unicité respectée (ingestion idempotente) | ☑ | Contrainte composite `timestamp + sensor_id` sur `mesures_iot`, avec ingestion idempotente via déduplication avant insertion. À déclarer dans `src/models.py` puis dans la migration Alembic. |
-| Manquants traités explicitement | ☑ | `vibration_mms` reste nullable ; `temperature_c` et `debit_uh` sont conservés non nuls. La stratégie de nettoyage doit être appliquée à l'ingestion et couverte par les tests. |
-| Capteur défaillant Roubaix L3 : repéré + décision tracée (écarter / marquer / aval) *(option A)* | ☑ | Les valeurs aberrantes du capteur Roubaix L3 sont repérées à l'ingestion et écartées ou marquées selon la règle documentée dans le pipeline ; la décision est tracée dans `decisions.md`. |
-| `ouvrier_id` hashé ou retiré, jamais en clair *(option B)* | s.o. | Source IoT choisie, donc clause ERP hors périmètre. |
-| Types conformes (DateTime, numériques typés) | ☑ | `timestamp` en `DateTime`, `line_id` en `Integer`, `temperature_c` / `vibration_mms` / `debit_uh` en `Float`, à aligner dans `src/models.py` et la migration. |
+| Unicité respectée (ingestion idempotente) | ☐ | ... |
+| Manquants traités explicitement | ☐ | ... |
+| Capteur défaillant Roubaix L3 : repéré + décision tracée (écarter / marquer / aval) *(option A)* | ☐ / s.o. | ... |
+| `ouvrier_id` hashé ou retiré, jamais en clair *(option B)* | ☐ / s.o. | ... |
+| Types conformes (DateTime, numériques typés) | ☐ | ... |
 
 ---
 
