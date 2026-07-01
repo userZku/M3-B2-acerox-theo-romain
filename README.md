@@ -4,6 +4,8 @@
 > mercredi crée son repo perso depuis ce template (« Use this template »)
 > et invite l'autre comme collaborateur.
 
+Théo & Romain
+
 ---
 
 ## 🚀 Démarrage (5 commandes)
