@@ -40,7 +40,15 @@
 
 **Argument** : ça permet de les regrouper en une seule ligne (utile pour le CSV capteurs IoT qui a 2 % de doublons natifs :))
 
-## 5. Migration Alembic
+## 5. Gestion du capteur défaillant Roubaix L3
+
+> DÉCIDER du sort du capteur défaillant Roubaix L3 (écarter / marquer / traiter en aval)
+> et le documenter (cf. contrat + fiche modèle)
+
+Nous avons choisit de le traiter en aval pour garder les données de température et de débit qui nous parraissent pas aberrantes et qui peuvent aider à l'entrainement du modèle.
+Nous avons donc inséré null pour la donnée vibration car le modèle l'autorise.
+
+## 6. Migration Alembic
 
 > Documenter le rollback (alembic downgrade -1) et expliquer quand un rollback est nécessaire (migration boguée, déploiement à annuler), pas seulement la commande.
 
@@ -52,7 +60,7 @@
 - Avant rollback: sauvegarde de la BDD + vérification de l'impact (perte potentielle de données si la migration supprimait des colonnes/tables).
 - Après rollback: correction du script, nouveau test, puis `alembic upgrade head` pour redéployer proprement.
 
-## 6. Stratégie RGPD (si vous prenez ERP)
+## 7. Stratégie RGPD (si vous prenez ERP)
 
 > Si vous prenez ERP : que faites-vous de `ouvrier_id` ?
 
@@ -62,7 +70,7 @@
 
 **Argument** : inutile dans notre cas
 
-## 7. Stratégie de tests
+## 8. Stratégie de tests
 
 > Quels 3 tests minimum allez-vous écrire ?
 
@@ -70,13 +78,13 @@
 2. Ingestion d'un fichier valide → N lignes insérées sans doublon : vérification qu'aucune insertion en BDD ne se produit à la 2ème insertion
 3. Ingestion fichier malformé → exception claire, BDD inchangée : vérification de la bonne réception d'un exception claire et que la BDD est inchangée
 
-## 8. Convention binôme
+## 9. Convention binôme
 
 - Driver / Navigator switch toutes les **30 min** : ☑ oui ☐ adapté à...
 - Tous les commits significatifs ont `Co-authored-by:` : ☑ oui ☐ ...
 - Branche perso ou main partagée : main partagé
 
-## 9. Conformité au contrat de données
+## 10. Conformité au contrat de données
 
 > Confrontez votre livraison à `ressources/contrat_donnees_modele.md`. Pour
 > chaque clause de qualité **honorée** : laquelle, comment, et **où** dans le
