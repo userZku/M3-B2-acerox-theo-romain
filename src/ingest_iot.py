@@ -44,6 +44,9 @@ def ingest_mesures_iot() -> int:
             # On ignore toute ligne déjà présente (même timestamp + sensor_id).
             if key in existing_measurements:
                 continue
+            # Traiter en aval la ligne 3 du site Roubaix pour prendre en compte les données température et débit mais pas la vibration qu'on passe à null (car autorisé)
+            if row["site"] == "Roubaix" and row["line_id"] == 3:
+                row["vibration_mms"] = None
             # Mapping explicite CSV -> modèle SQLAlchemy avant insertion.
             session.add(
                 MesuresIoT(
