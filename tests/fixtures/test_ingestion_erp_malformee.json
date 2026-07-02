@@ -1,0 +1,12 @@
+[
+  {
+    "ordre_id": 2001,
+    "produit_ref": "ALU-001",
+    "site": "Lille",
+    "line_id": 1,
+    "date_lancement": "2026-01-10T08:00:00",
+    "date_fin_prevue": "2026-01-10T16:00:00",
+    "ouvrier_id": "OP-999",
+    "quantite_kg": 300
+  }
+]
