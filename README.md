@@ -6,6 +6,67 @@ Ce dépôt contient une pipeline d’ingestion pour les mesures IoT, un modèle 
 
 ---
 
+## Schéma des flux
+
+```mermaid
+%%{init: {
+  "themeVariables": {
+    "background": "#0176D3",
+    "edgeColor": "#ff0000",
+    "lineColor": "#ff0000",
+    "arrowheadColor": "#ff0000",
+    "edgeStrokeWidth": 5
+  }
+}}%%
+flowchart LR
+    %% Sources
+    SRC1["📡 capteurs_iot.csv<br>s7"]
+    SRC2["📋 erp_export.json<br>s8"]
+    SRC3["📝 logs_machines.log<br>s9"]
+
+    %% Ingestion détaillée
+    subgraph INGEST["🔄 Ingestion — pandas + SQLAlchemy"]
+        STEP1["📆 Conversion vers datetime Python-compatible<br/>(SQLite-friendly)"]
+        STEP2["🧹 Déduplication pandas<br/>clé métier (contrat IoT)"]
+        STEP3["📸 Snapshot des clés déjà en base<br/>→ idempotence"]
+        STEP4["🚫 Ignorer lignes déjà présentes<br/>(même timestamp + sensor_id)"]
+        STEP5["🏭 Traitement site Roubaix (ligne 3)<br/>Température + débit conservés, vibration = null"]
+        STEP6["🗺️ Mapping explicite CSV → modèle SQLAlchemy"]
+        STEP7["🔁 Gestion des doublons dans le même CSV"]
+        STEP8["💾 Commit unique en fin de boucle"]
+    end
+
+    %% Stockage détaillé
+    subgraph BDD["🗄️ BDD pivot — SQLite"]
+        PRODUITS["📦 Table PRODUITS<br/>id (PK)<br/>produit_ref (UK)<br/>nom<br/>categorie<br/>unite"]
+        MESURES["📈 Table MESURES_IOT<br/>id (PK)<br/>timestamp<br/>site<br/>line_id<br/>sensor_id<br/>temperature_c<br/>vibration_mms<br/>debit_uh"]
+    end
+
+    %% Modèle existant
+    MODEL[🧠 Modèle prédiction défauts<br/>Acerox — existant]
+
+    %% Liens
+    SRC1 -->|temps réel| INGEST
+    SRC2 -.->|batch journalier| INGEST
+    SRC3 -.->|Transformation CSV : les 4 premiers espaces remplacés par des virgules| INGEST
+    STEP8 -->|insertion SQLAlchemy| BDD
+    PRODUITS -->|référencé par| MESURES
+    BDD -->|consommée par| MODEL
+
+    %% Styles
+    classDef source fill:#e1f5ff,stroke:#0277bd,color:#000000
+    classDef modele fill:#fff4e1,stroke:#c97a00,color:#000000
+    classDef B2 fill:#d4f4dd,stroke:#1a7a3a,color:#000000
+    classDef ETAPE fill:#eeeeee,stroke:#bcbcbc,color:#000000
+    class SRC1,SRC2,SRC3 source
+    class BDD B2
+    class INGEST B2
+    class STEP1,STEP2,STEP3,STEP4,STEP5,STEP6,STEP7,STEP8,PRODUITS,MESURES ETAPE
+    class MODEL modele
+```
+
+---
+
 ## Démarrage rapide
 
 ```bash
