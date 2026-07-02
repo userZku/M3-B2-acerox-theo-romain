@@ -8,7 +8,7 @@ TODO binôme : ajouter ICI le modèle de votre nouvelle table
 """
 from __future__ import annotations
 
-from sqlalchemy import Column, DateTime, Float, Integer, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, Float, Integer, String, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -69,3 +69,23 @@ class MesuresIoT(Base):
 
     def __repr__(self) -> str:
         return f"MesuresIoT(timestamp={self.timestamp!r}, temperature_c={self.temperature_c}, debit_uh={self.debit_uh})"
+
+class OrdresErp(Base):
+    """Table des ordres ERP (exemple de table à ajouter)."""
+
+    __tablename__ = "ordres_erp"
+    __table_args__ = (UniqueConstraint("ordre_id", name="uq_ordres_erp_ordre_id"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ordre_id = Column(String(50), nullable=False, unique=True, index=True)
+    produit_ref = Column(String(20), ForeignKey("produits.produit_ref"), nullable=False, index=True)
+    site = Column(String(50), nullable=False, index=True)
+    line_id = Column(Integer, nullable=False, index=True)
+    date_lancement = Column(DateTime, nullable=False)
+    date_fin_prevue = Column(DateTime, nullable=False)
+    statut = Column(String(20), nullable=False, index=True)
+    ouvrier_hash = Column(String(64), nullable=False, index=True)  # SHA-256 hex
+    quantite_kg = Column(Float, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"OrdresErp(ordre_id={self.ordre_id!r}, produit_ref={self.produit_ref!r}, date_lancement={self.date_lancement!r}, date_fin_prevue={self.date_fin_prevue!r}, statut={self.statut!r}, quantite_kg={self.quantite_kg!r})"
