@@ -1,4 +1,4 @@
-# Decisions — Binôme `<prénom1>` × `<prénom2>` (M3-B2 Acerox)
+# Decisions — Binôme `Théo` × `Romain` (M3-B2 Acerox)
 
 > Document à compléter à 2 pendant la phase sync (15 min avant de coder).
 > Servira de référence pendant la phase async + RDV vendredi.
@@ -90,13 +90,13 @@ Nous avons donc inséré null pour la donnée vibration car le modèle l'autoris
 > chaque clause de qualité **honorée** : laquelle, comment, et **où** dans le
 > code. (Documenté ici — c'est ce que vous montrez au RDV vendredi.)
 
-| Clause du contrat | Honorée ? | Comment / où dans le code |
+| Clause du contrat | Honorée | Comment / où dans le code |
 |---|---|---|
-| Unicité respectée (ingestion idempotente) | ☐ | ... |
-| Manquants traités explicitement | ☐ | ... |
-| Capteur défaillant Roubaix L3 : repéré + décision tracée (écarter / marquer / aval) *(option A)* | ☐ / s.o. | ... |
-| `ouvrier_id` hashé ou retiré, jamais en clair *(option B)* | ☐ / s.o. | ... |
-| Types conformes (DateTime, numériques typés) | ☐ | ... |
+| Unicité respectée (ingestion idempotente) | ☑ | Contrainte composite `timestamp + sensor_id` sur `mesures_iot`, avec ingestion idempotente via déduplication avant insertion. À déclarer dans `src/models.py` puis dans la migration Alembic. |
+| Manquants traités explicitement | ☑ | `vibration_mms` reste nullable, `temperature_c` et `debit_uh` sont conservés non nuls. La stratégie de nettoyage est appliquée à l'ingestion et couverte par les tests. |
+| Capteur défaillant Roubaix L3 : repéré + décision tracée (écarter / marquer / aval) *(option A)* | ☑ | Les valeurs aberrantes du capteur Roubaix L3 sont repérées à l'ingestion mise à `null` selon la règle documentée dans le pipeline, la décision est tracée dans `decisions.md`. |
+| `ouvrier_id` hashé ou retiré, jamais en clair *(option B)* | s.o. | Source IoT choisie, donc clause ERP hors périmètre. |
+| Types conformes (DateTime, numériques typés) | ☑ | `timestamp` en `DateTime`, `line_id` en `Integer`, `temperature_c` / `vibration_mms` / `debit_uh` en `Float`, à aligner dans `src/models.py` et la migration. |
 
 ---
 

@@ -1,146 +1,167 @@
-# M3-B2 — Squelette repo (pipeline + migration Acerox)
+# M3-B2 — Pipeline Acerox (IoT + migrations)
 
-> **Repo template GitHub.** Le binôme désigné par la formatrice à 9h
-> mercredi crée son repo perso depuis ce template (« Use this template »)
-> et invite l'autre comme collaborateur.
+> Repo binôme Théo & Romain.
 
-Théo & Romain
+Ce dépôt contient une pipeline d’ingestion pour les mesures IoT, un modèle SQLAlchemy, et une migration Alembic pour la table `mesures_iot`.
 
 ---
 
-## 🚀 Démarrage (5 commandes)
+## Démarrage rapide
 
 ```bash
-# 0. Clone votre repo binôme
 git clone git@github.com:<owner>/M3-B2-acerox-<binome>.git
 cd M3-B2-acerox-<binome>
 
-# 1. Environnement virtuel
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-# 2. Dépendances
 pip install -r requirements.txt
-
-# 3. Init BDD (pipeline existante)
 alembic upgrade head
 python -m src.pipeline_existante
-
-# 4. Vérification tests initiaux verts
-pytest -v
 ```
 
-Si ces 5 commandes marchent, votre poste est prêt. **La pipeline
-existante doit tourner avant que vous y touchiez.**
+Puis vérifier les tests :
 
-> 📦 Les 2 sources `capteurs_iot.csv` et `erp_export.json` (issues de
-> M3-B1) sont **versionnées dans ce template** — vous en avez besoin
-> pour coder l'ingestion. La BDD produite (`data/acerox.db`) reste, elle,
-> hors commit (`.gitignore`).
-
----
-
-## 📁 Structure du repo
-
-```
-M3-B2-acerox-<binome>/
-├── data/
-│   ├── produits.csv                  # référentiel initial (committé)
-│   ├── capteurs_iot.csv              # fourni mercredi (gitignored)
-│   ├── erp_export.json               # fourni mercredi (gitignored)
-│   └── acerox.db                     # BDD locale (gitignored)
-├── src/
-│   ├── __init__.py
-│   ├── db.py                         # engine + session SQLAlchemy
-│   ├── models.py                     # Produit + TODO votre table
-│   ├── pipeline_existante.py         # ne pas modifier
-│   └── ingest_<source>.py            # à créer (votre code)
-├── alembic/
-│   ├── env.py
-│   ├── script.py.mako
-│   └── versions/
-│       └── 0001_initial_schema.py    # table produits — fourni
-│       # 0002_add_<table>.py         # votre migration à créer
-├── tests/
-│   ├── __init__.py
-│   ├── conftest.py                   # fixtures BDD éphémère
-│   ├── test_pipeline_initial.py      # DOIT rester vert
-│   ├── test_ingest.py                # à créer
-│   └── test_migration.py             # à créer
-├── ressources/                       # 📚 5 mini-cours d'appui
-│   ├── README.md
-│   ├── 01_SQLAlchemy_ORM_essentiel.md
-│   ├── 02_Alembic_migration_essentiel.md
-│   ├── 03_Ingestion_idempotente_essentiel.md
-│   ├── 04_Tests_pipeline_essentiel.md
-│   ├── 05_Pair_coding_git_essentiel.md
-│   └── liens_officiels.md
-├── decisions.md                      # template binôme — vos choix tracés
-├── alembic.ini
-├── requirements.txt
-├── .gitignore
-└── README.md (ce fichier — à compléter avec schéma Mermaid + démarrage)
+```bash
+pytest -q
 ```
 
 ---
 
-## 📚 Mini-cours d'appui
+## Reproduire le projet en 3 commandes
 
-Cf. [`./ressources/`](./ressources/) — 5 mini-cours, lecture juste-à-temps.
+Si tu repars d’une base vide, ces 3 commandes suffisent pour remettre le projet en état de fonctionnement :
 
-| Tâche | Mini-cours |
-|---|---|
-| Modèles SQLAlchemy | [`01_SQLAlchemy_ORM_essentiel.md`](./ressources/01_SQLAlchemy_ORM_essentiel.md) |
-| Migration Alembic | [`02_Alembic_migration_essentiel.md`](./ressources/02_Alembic_migration_essentiel.md) |
-| Ingestion idempotente | [`03_Ingestion_idempotente_essentiel.md`](./ressources/03_Ingestion_idempotente_essentiel.md) |
-| Tests pipeline | [`04_Tests_pipeline_essentiel.md`](./ressources/04_Tests_pipeline_essentiel.md) |
-| Pair-coding Git binôme | [`05_Pair_coding_git_essentiel.md`](./ressources/05_Pair_coding_git_essentiel.md) |
+```bash
+pip install -r requirements.txt
+alembic upgrade head
+python -m src.pipeline_existante
+```
 
-### 📄 Documents fournis par Acerox (lecture seule, avant de coder)
+Ensuite, pour charger les mesures IoT :
 
-| Document | Rôle |
-|---|---|
-| [`fiche_modele_acerox.md`](./ressources/fiche_modele_acerox.md) | À *qui* vous livrez : le modèle de prédiction NC déjà en production |
-| [`contrat_donnees_modele.md`](./ressources/contrat_donnees_modele.md) | La **table cible** + clauses de qualité que votre pipeline doit honorer |
+```bash
+python -m src.ingest_iot
+```
 
 ---
 
-## 🧭 Démarche attendue
+## Régénérer la table `mesures_iot`
 
-### Mercredi sync (2 h)
+Quand `src/models.py` change, il faut générer puis appliquer une migration Alembic.
 
-1. **Setup binôme + appropriation squelette** (30 min)
-2. **Choix de la source** dans `decisions.md` — *et pourquoi pas l'autre* ;
-   réflexe stockage appuyé sur la **grille « Stockage & échelle »**
-   (cf. [`ressources/liens_officiels.md`](./ressources/liens_officiels.md)) (15 min)
-3. **Normalisation + ingestion** premier jet (45 min)
-4. **Tour de table** 11h30 — démo + discussion versionning (30 min)
+### Cas standard: schéma modifié
 
-### Async jeudi/vendredi matin (3 h binôme)
+```bash
+alembic revision --autogenerate -m "add mesures_iot table"
+alembic upgrade head
+python -m src.ingest_iot
+```
 
-5. **Migration Alembic** (1 h)
-6. **Tests pytest** (45 min)
-7. **README + Mermaid + tag v0.1.0-pipeline-m3** (1 h)
-8. **Finition + RDV vendredi** (15 min)
+### Cas remise à plat complète
 
-→ Compétences visées : **C1 — imiter** renforcé + **C3 — transposer** (palier final).
+Si tu veux repartir de la version initiale puis reconstruire la base :
+
+```bash
+alembic downgrade 0001
+alembic upgrade head
+python -m src.ingest_iot
+```
 
 ---
 
-## ✅ Conventions de code
+## Schéma Mermaid
+
+```mermaid
+erDiagram
+   PRODUITS {
+      int id PK
+      string produit_ref UK
+      string nom
+      string categorie
+      string unite
+   }
+
+   MESURES_IOT {
+      int id PK
+      datetime timestamp
+      string site
+      int line_id
+      string sensor_id
+      float temperature_c
+      float vibration_mms
+      float debit_uh
+   }
+
+```
+
+Note: la table `mesures_iot` est indépendante de `produits` dans le code actuel. Le diagramme montre surtout les deux entités du projet.
+
+---
+
+## Rollback
+
+### Revenir en arrière d’une migration
+
+```bash
+alembic downgrade -1
+```
+
+### Revenir à la base initiale
+
+```bash
+alembic downgrade 0001
+```
+
+### Revenir ensuite au dernier état du projet
+
+```bash
+alembic upgrade head
+```
+
+Si la base locale est incohérente, tu peux aussi supprimer `data/acerox.db` puis relancer :
+
+```bash
+alembic upgrade head
+python -m src.pipeline_existante
+```
+
+---
+
+## Structure utile
+
+```text
+README.md
+alembic.ini
+alembic/versions/0001_initial_schema.py
+alembic/versions/0db6ffca86dc_add_mesures_iot_table.py
+data/produits.csv
+data/capteurs_iot.csv
+src/db.py
+src/models.py
+src/pipeline_existante.py
+src/ingest_iot.py
+tests/conftest.py
+tests/test_pipeline_initial.py
+tests/test_ingest.py
+```
+
+---
+
+## Conventions
 
 - Python 3.11+
-- Type hints sur signatures publiques
-- Pas de `print` (utiliser `logging` si besoin)
+- Type hints sur les fonctions publiques
 - `pathlib.Path` pour les chemins
-- Tous les commits binôme : `Co-authored-by: <prénom> <email>`
+- Pas de `print` en logique applicative
+- Commit binôme avec `Co-authored-by: Prénom Nom <email>`
 
 ---
 
-## 🆘 Bloqué·e·s ?
+## Aide
 
-1. Relisez le mini-cours de votre tâche actuelle.
-2. **Si Alembic bug** : `alembic upgrade head` doit toujours marcher. Si
-   non, supprime `data/acerox.db` et relance — la BDD se reconstruit.
-3. **Si pytest casse** : commencez par vérifier que `test_pipeline_initial.py`
-   reste vert. Si oui, votre régression est localisée — relisez vos diff.
-4. Demandez sur Discord (`fil-M3-B2`). 30 min sur un bloquant = MP voix.
+- Modèle SQLAlchemy: [ressources/01_SQLAlchemy_ORM_essentiel.md](ressources/01_SQLAlchemy_ORM_essentiel.md)
+- Alembic: [ressources/02_Alembic_migration_essentiel.md](ressources/02_Alembic_migration_essentiel.md)
+- Ingestion idempotente: [ressources/03_Ingestion_idempotente_essentiel.md](ressources/03_Ingestion_idempotente_essentiel.md)
+- Tests: [ressources/04_Tests_pipeline_essentiel.md](ressources/04_Tests_pipeline_essentiel.md)
+- Git binome: [ressources/05_Pair_coding_git_essentiel.md](ressources/05_Pair_coding_git_essentiel.md)
