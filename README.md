@@ -40,6 +40,7 @@ flowchart LR
     subgraph BDD["🗄️ BDD pivot — SQLite"]
         PRODUITS["📦 Table PRODUITS<br/>id (PK)<br/>produit_ref (UK)<br/>nom<br/>categorie<br/>unite"]
         MESURES["📈 Table MESURES_IOT<br/>id (PK)<br/>timestamp<br/>site<br/>line_id<br/>sensor_id<br/>temperature_c<br/>vibration_mms<br/>debit_uh"]
+         ORDRES["📋 Table ORDRES_ERP<br/>id (PK)<br/>ordre_id<br/>produit_ref<br/>site<br/>line_id<br/>date_lancement<br/>date_fin_prevue<br/>statut<br/>ouvrier_hash<br/>quantite_kg"]
     end
 
     %% Modèle existant
@@ -50,7 +51,7 @@ flowchart LR
     SRC2 -.->|batch journalier| INGEST
     SRC3 -.->|Transformation CSV : les 4 premiers espaces remplacés par des virgules| INGEST
     STEP8 -->|insertion SQLAlchemy| BDD
-    PRODUITS -->|référencé par| MESURES
+      PRODUITS -->|produit_ref| ORDRES
     BDD -->|consommée par| MODEL
 
     %% Styles
@@ -61,7 +62,7 @@ flowchart LR
     class SRC1,SRC2,SRC3 source
     class BDD B2
     class INGEST B2
-    class STEP1,STEP2,STEP3,STEP4,STEP5,STEP6,STEP7,STEP8,PRODUITS,MESURES ETAPE
+   class STEP1,STEP2,STEP3,STEP4,STEP5,STEP6,STEP7,STEP8,PRODUITS,MESURES,ORDRES ETAPE
     class MODEL modele
 ```
 
@@ -104,10 +105,15 @@ Ensuite, pour charger les mesures IoT :
 ```bash
 python -m src.ingest_iot
 ```
+Pour charger les ordres ERP :
+
+```bash
+python -m src.ingest_erp
+```
 
 ---
 
-## Régénérer la table `mesures_iot`
+## Régénérer la table `mesures_iot` et `ordres_erp`
 
 Quand `src/models.py` change, il faut générer puis appliquer une migration Alembic.
 
@@ -117,6 +123,7 @@ Quand `src/models.py` change, il faut générer puis appliquer une migration Ale
 alembic revision --autogenerate -m "add mesures_iot table"
 alembic upgrade head
 python -m src.ingest_iot
+python -m src.ingest_erp
 ```
 
 ### Cas remise à plat complète
@@ -127,6 +134,7 @@ Si tu veux repartir de la version initiale puis reconstruire la base :
 alembic downgrade 0001
 alembic upgrade head
 python -m src.ingest_iot
+python -m src.ingest_erp
 ```
 
 ---
@@ -154,9 +162,25 @@ erDiagram
       float debit_uh
    }
 
+   ORDRES_ERP {
+      int id PK
+      string ordre_id
+      string produit_ref
+      string site
+      int line_id
+      datetime date_lancement
+      datetime date_fin_prevue
+      string statut
+      string ouvrier_hash
+      float quantite_kg
+   }
+
+   PRODUITS ||--o{ ORDRES_ERP : "produit_ref"
+
 ```
 
 Note: la table `mesures_iot` est indépendante de `produits` dans le code actuel. Le diagramme montre surtout les deux entités du projet.
+La table `ordres_erp` est liée à `produits` via `produit_ref` : chaque ordre ERP référence un produit du référentiel Acerox.
 
 ---
 
@@ -166,6 +190,12 @@ Note: la table `mesures_iot` est indépendante de `produits` dans le code actuel
 
 ```bash
 alembic downgrade -1
+```
+
+### Revenir à la base mesure_iot
+
+```bash
+alembic downgrade 0db6ffca86dc
 ```
 
 ### Revenir à la base initiale
@@ -180,6 +210,12 @@ alembic downgrade 0001
 alembic upgrade head
 ```
 
+### Versionning des migrations
+
+```bash
+alembic history
+```
+
 Si la base locale est incohérente, tu peux aussi supprimer `data/acerox.db` puis relancer :
 
 ```bash
@@ -189,22 +225,52 @@ python -m src.pipeline_existante
 
 ---
 
-## Structure utile
+## 📁 Structure du repo
 
-```text
-README.md
-alembic.ini
-alembic/versions/0001_initial_schema.py
-alembic/versions/0db6ffca86dc_add_mesures_iot_table.py
-data/produits.csv
-data/capteurs_iot.csv
-src/db.py
-src/models.py
-src/pipeline_existante.py
-src/ingest_iot.py
-tests/conftest.py
-tests/test_pipeline_initial.py
-tests/test_ingest.py
+```
+M3-B2-acerox-<binome>/
+├── data/
+│   ├── produits.csv                  # référentiel initial Acerox
+│   ├── capteurs_iot.csv              # source IoT ingérée
+│   ├── erp_export.json               # source ERP ingérée
+│   └── acerox.db                     # BDD SQLite locale
+├── src/
+│   ├── __init__.py
+│   ├── db.py                         # engine + session SQLAlchemy
+│   ├── models.py                     # Produit + MesuresIoT + OrdresErp
+│   ├── pipeline_existante.py         # pipeline produit initiale
+│   ├── ingest_iot.py                 # ingestion idempotente des mesures IoT
+│   └── ingest_erp.py                 # ingestion des ordres ERP
+├── alembic/
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
+│       ├── 0001_initial_schema.py                # table produits
+│       ├── 0db6ffca86dc_add_mesures_iot_table.py # ajout de mesures_iot
+│       └── c0251bc5f83c_add_ordres_erp_table.py  # ajout de ordres_erp
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py                   # fixtures BDD éphémère
+│   ├── fixtures/                     # jeux de données de test
+│   ├── test_pipeline_initial.py      # non-régression pipeline initiale
+│   ├── test_ingest_iot.py            # tests ingestion IoT
+│   ├── test_ingest_erp.py            # tests ingestion ERP
+│   └── test_migration.py             # tests de schéma et migrations
+├── ressources/                       # docs d'appui + contrat de données
+│   ├── README.md
+│   ├── 01_SQLAlchemy_ORM_essentiel.md
+│   ├── 02_Alembic_migration_essentiel.md
+│   ├── 03_Ingestion_idempotente_essentiel.md
+│   ├── 04_Tests_pipeline_essentiel.md
+│   ├── 05_Pair_coding_git_essentiel.md
+│   ├── contrat_donnees_modele.md
+│   ├── fiche_modele_acerox.md
+│   └── liens_officiels.md
+├── decisions.md                      # décisions d'architecture et de conformité
+├── alembic.ini
+├── requirements.txt
+├── .gitignore
+└── README.md                         # documentation projet
 ```
 
 ---
